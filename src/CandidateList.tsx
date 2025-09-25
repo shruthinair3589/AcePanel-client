@@ -1,150 +1,238 @@
 import React, { useEffect, useState } from "react";
 import API from "./api";
 import { useNavigate } from "react-router-dom";
+import { Edit, Trash2, Download, Calendar, FileText } from "lucide-react";
 
 interface Candidate {
   id: number;
   name: string;
   email: string;
+  phone: string;
   position: string;
-  years_of_experience: number;
+  experience_years: number;
   technology: string[];
+  resume_stored: boolean;
+  status?: string; // Optional extra status text
 }
 
 const CandidateList: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>("");
-  const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
-  const [search, setSearch] = useState<string>("");
-
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 9; // Show 9 cards per page
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [deleteCandidateId, setDeleteCandidateId] = useState<number | null>(null);
+  const [expandedSkills, setExpandedSkills] = useState<Record<number, boolean>>({});
 
   const navigate = useNavigate();
 
+  const fetchCandidates = async () => {
+    try {
+      const res = await API.get("/get-all-candidates");
+      setCandidates(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCandidates = async () => {
-      try {
-        const res = await API.get("/get-all-candidates");
-        setCandidates(res.data);
-        setFilteredCandidates(res.data);
-        setLoading(false);
-      } catch (err: any) {
-        console.error(err);
-        setError("Failed to fetch candidates");
-        setLoading(false);
-      }
-    };
     fetchCandidates();
   }, []);
 
-  // Search filter
-  useEffect(() => {
-    const filtered = candidates.filter(
-      (c) =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        c.email.toLowerCase().includes(search.toLowerCase()) ||
-        c.position.toLowerCase().includes(search.toLowerCase())
-    );
-    setFilteredCandidates(filtered);
-    setCurrentPage(1); // Reset page on search
-  }, [search, candidates]);
-
-  // Pagination logic
-  const indexOfLast = currentPage * itemsPerPage;
-  const indexOfFirst = indexOfLast - itemsPerPage;
-  const currentCandidates = filteredCandidates.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(filteredCandidates.length / itemsPerPage);
-
-  const handleStartInterview = () => {
-    const candidate = candidates.find(c => c.id === selectedCandidateId);
-    if (!candidate) return;
-    alert(`Launching interview for ${candidate.name}`);
+  const handleDelete = async (id: number) => {
+    try {
+      await API.delete(`/delete-candidate/${id}`);
+      setCandidates((prev) => prev.filter((c) => c.id !== id));
+      setDeleteCandidateId(null);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleAddCandidate = () => {
-    navigate("/create-candidate");
+  const handleDownload = (id: number) => {
+    window.open(`${API.defaults.baseURL}/download-resume/${id}`, "_blank");
   };
 
-  if (loading) return <div className="p-6 text-gray-700 text-center">Loading candidates...</div>;
-  if (error) return <div className="p-6 text-red-500 text-center font-semibold">{error}</div>;
+  const toggleSkills = (id: number) => {
+    setExpandedSkills((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const filteredCandidates = candidates.filter(
+    (c) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.email.toLowerCase().includes(search.toLowerCase()) ||
+      c.position.toLowerCase().includes(search.toLowerCase()) ||
+      c.technology.some((tech) => tech.toLowerCase().includes(search.toLowerCase()))
+  );
 
   return (
-    <div className="p-6 min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex flex-col items-center">
-      <div className="w-full max-w-6xl flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-indigo-600">Candidates</h2>
-        <button
-          onClick={handleAddCandidate}
-          className="px-6 py-2 bg-indigo-500 text-white rounded-xl shadow hover:bg-indigo-600 transition"
-        >
-          + Add Candidate
-        </button>
-      </div>
-
-      {/* Search */}
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <h2 className="mb-6 text-2xl font-bold text-gray-800">Candidates</h2>
       <input
         type="text"
-        placeholder="Search by name, email, or position..."
+        placeholder="Search by name, email, position, or tech..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full max-w-md mb-6 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+        className="mb-6 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-300 focus:outline-none"
       />
 
-      {/* Candidates grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-6xl">
-        {currentCandidates.map((c) => {
-          const isSelected = selectedCandidateId === c.id;
-          return (
-            <div
-              key={c.id}
-              onClick={() => setSelectedCandidateId(c.id)}
-              className={`p-6 bg-white rounded-2xl shadow hover:shadow-lg cursor-pointer transition transform ${
-                isSelected ? "ring-2 ring-indigo-500 scale-105" : ""
-              }`}
-            >
-              <h3 className="text-xl font-bold text-indigo-600">{c.name}</h3>
-              <p className="text-gray-600">{c.email}</p>
-              <p className="text-gray-700 font-medium">{c.position}</p>
-              <p className="text-gray-500">{c.years_of_experience} years experience</p>
-              <p className="text-gray-500 mt-2">
-                <span className="font-semibold">Tech:</span> {c.technology.join(", ")}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+      {loading ? (
+        <p className="text-gray-600">Loading candidates...</p>
+      ) : filteredCandidates.length === 0 ? (
+        <p className="text-gray-600">No candidates found.</p>
+      ) : (
+        <div className="space-y-4">
+          {filteredCandidates.map((c) => {
+            const interviewScheduled = c.id % 2 === 0; // demo
+            const isExpanded = expandedSkills[c.id] || false;
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex gap-2 mt-6">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 bg-indigo-100 rounded hover:bg-indigo-200 disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span className="px-4 py-2">{currentPage} / {totalPages}</span>
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-indigo-100 rounded hover:bg-indigo-200 disabled:opacity-50"
-          >
-            Next
-          </button>
+            const initialTech = c.technology.slice(0, 4);
+            const extraTech = c.technology.slice(4);
+
+            return (
+              <div
+                key={c.id}
+                className="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden"
+              >
+                {/* Candidate Info */}
+                <div className="p-6">
+                  {/* Name + Status Badge */}
+                  <div className="flex items-center mb-1">
+                    <h3 className="text-lg font-semibold text-gray-900 truncate">
+                      {c.name}
+                    </h3>
+                    <span
+                      className={`ml-3 px-3 py-1 text-xs font-medium rounded-full ${
+                        interviewScheduled
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {interviewScheduled ? "Scheduled" : "Not Scheduled"}
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-gray-600">{c.email}</p>
+                  <p className="text-sm text-gray-600">{c.position}</p>
+                  <p className="text-sm text-gray-600">
+                    {c.experience_years} yrs experience
+                  </p>
+
+                  {/* Extra status text */}
+                  {c.status && (
+                    <p className="mt-2 text-sm font-medium text-indigo-700">
+                      {c.status}
+                    </p>
+                  )}
+
+                  {/* Skills */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {initialTech.map((tech, i) => (
+                      <span
+                        key={i}
+                        className="px-2 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+
+                    {!isExpanded && extraTech.length > 0 && (
+                      <button
+                        onClick={() => toggleSkills(c.id)}
+                        className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-gray-200 rounded-full hover:bg-gray-300"
+                      >
+                        +{extraTech.length} more
+                      </button>
+                    )}
+                  </div>
+
+                  {isExpanded && extraTech.length > 0 && (
+                    <div className="mt-2 flex flex-wrap max-h-24 overflow-y-auto border-t border-gray-200 pt-2 gap-2">
+                      {extraTech.map((tech, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                      <button
+                        onClick={() => toggleSkills(c.id)}
+                        className="px-2 py-0.5 text-xs font-medium text-gray-700 bg-gray-200 rounded-full hover:bg-gray-300"
+                      >
+                        Collapse
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions Footer */}
+                <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 flex flex-wrap gap-4">
+                  <button
+                    onClick={() => navigate(`/edit-candidate/${c.id}`)}
+                    className="flex flex-col items-center justify-center w-16 py-2 text-gray-700 hover:text-indigo-600 transition"
+                  >
+                    <Edit size={18} />
+                    <span className="text-xs mt-1">Edit</span>
+                  </button>
+
+                  {deleteCandidateId === c.id ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDelete(c.id)}
+                        className="flex flex-col items-center justify-center w-16 py-2 text-red-600 hover:text-red-700 transition"
+                      >
+                        <Trash2 size={18} />
+                        <span className="text-xs mt-1">Confirm</span>
+                      </button>
+                      <button
+                        onClick={() => setDeleteCandidateId(null)}
+                        className="flex flex-col items-center justify-center w-16 py-2 text-gray-500 hover:text-gray-700 transition"
+                      >
+                        ✕
+                        <span className="text-xs mt-1">Cancel</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setDeleteCandidateId(c.id)}
+                      className="flex flex-col items-center justify-center w-16 py-2 text-gray-700 hover:text-red-600 transition"
+                    >
+                      <Trash2 size={18} />
+                      <span className="text-xs mt-1">Delete</span>
+                    </button>
+                  )}
+
+                  {c.resume_stored && (
+                    <button
+                      onClick={() => handleDownload(c.id)}
+                      className="flex flex-col items-center justify-center w-16 py-2 text-gray-700 hover:text-green-600 transition"
+                    >
+                      <Download size={18} />
+                      <span className="text-xs mt-1">Resume</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => navigate(`/schedule-interview/${c.id}`)}
+                    className="flex flex-col items-center justify-center w-16 py-2 text-gray-700 hover:text-purple-600 transition"
+                  >
+                    <Calendar size={18} />
+                    <span className="text-xs mt-1">Schedule</span>
+                  </button>
+
+                  <button
+                    onClick={() => navigate(`/feedback/${c.id}`)}
+                    className="flex flex-col items-center justify-center w-16 py-2 text-gray-700 hover:text-blue-600 transition"
+                  >
+                    <FileText size={18} />
+                    <span className="text-xs mt-1">Result</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      )}
-
-      {/* Start Interview button */}
-      {selectedCandidateId && (
-        <button
-          onClick={handleStartInterview}
-          className="mt-6 px-12 py-4 bg-indigo-500 text-white rounded-3xl shadow-lg hover:bg-indigo-600 transition"
-        >
-          Start Interview
-        </button>
       )}
     </div>
   );

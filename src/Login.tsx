@@ -22,8 +22,8 @@ const Login: React.FC = () => {
         const payload = { email, password, role };
         await API.post("/login", payload);
 
-        sessionStorage.setItem("isLoggedIn", "true");
-        sessionStorage.setItem("role", role);
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("role", role);
         navigate("/");
       }
     } catch (err: any) {
