@@ -1,159 +1,188 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
   useLocation,
-  useNavigate,
 } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 
 import Login from "./Login";
 import CandidateList from "./CandidateList";
 import CandidateProfile from "./CandidateProfile";
 import RecruiterDashboard from "./RecruiterDashboard";
-import { BarChart2, Home, LogOut, PlusCircle, Users } from "lucide-react";
+import ScheduleInterview from "./ScheduleInterview";
+import PageLayout from "./PageLayout";
+import InterviewList from "./InterviewList";
+import CandidateDashboard from "./CandidateDasboard";
 
+// Reusable wrapper for page animations
+const AnimatedPage: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    transition={{ duration: 0.3 }}
+  >
+    {children}
+  </motion.div>
+);
 
-interface PageLayoutProps {
-  children: React.ReactNode;
-}
-
-const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
-  const navigate = useNavigate();
+const AppRoutes: React.FC<{
+  isLoggedIn: boolean;
+  role: string | null;
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+  setRole: React.Dispatch<React.SetStateAction<string | null>>;
+}> = ({ isLoggedIn, role, setIsLoggedIn, setRole }) => {
+  const isRecruiter = role === "recruiter";
+  const isCandidate = role === "candidate";
   const location = useLocation();
 
-  // Sidebar links with paths
-  const sidebarLinks = [
-    { label: "Dashboard", icon: <Home className="w-5 h-5 mr-3" />, path: "/" },
-     { label: "Candidates", icon: <Users className="w-5 h-5 mr-3" />, path: "/candidates" },
-    { label: "Add Candidate", icon: <PlusCircle className="w-5 h-5 mr-3" />, path: "/create-candidate" },
-    //  { label: "Configure Interview", icon: <ClipboardList className="w-5 h-5 mr-3" />, path: "/configure-interview" },
-    { label: "Reports & Feedback", icon: <BarChart2 className="w-5 h-5 mr-3" />, path: "/reports" },
-    // { label: "Settings", icon: <Settings className="w-5 h-5 mr-3" />, path: "/settings" },
-  ];
-
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r shadow-sm flex flex-col">
-        <div
-          className="p-6 text-xl font-bold text-indigo-600 cursor-pointer hover:bg-indigo-50"
-          onClick={() => navigate("/")}
-        >
-          AcePanel
-        </div>
-        <nav className="mt-6 flex-1 space-y-2">
-          {sidebarLinks.map((link) => {
-            const isActive = location.pathname === link.path;
-            return (
-              <button
-                key={link.label}
-                onClick={() => navigate(link.path)}
-                className={`flex items-center w-full px-4 py-2 text-gray-700 rounded-lg transition-colors ${isActive
-                    ? "bg-indigo-50 text-indigo-600 font-semibold"
-                    : "hover:bg-indigo-50 hover:text-indigo-600"
-                  }`}
-              >
-                {link.icon} {link.label}
-              </button>
-            );
-          })}
-        </nav>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Common Login */}
+        <Route
+          path="/login"
+          element={
+            <AnimatedPage>
+              <Login setIsLoggedIn={setIsLoggedIn} setRole={setRole} />
+            </AnimatedPage>
+          }
+        />
 
-        {/* Logout */}
-        <button
-          onClick={() => {
-            localStorage.clear();
-            navigate("/login");
-          }}
-          className="flex items-center px-4 py-2 text-white bg-indigo-600 m-4 rounded-lg hover:bg-indigo-700"
-        >
-          <LogOut className="w-5 h-5 mr-2" /> Logout
-        </button>
-      </aside>
+        {/* Candidate Login via special link */}
+        <Route
+          path="/candidate-login"
+          element={
+            <AnimatedPage>
+              <Login setIsLoggedIn={setIsLoggedIn} setRole={setRole} />
+            </AnimatedPage>
+          }
+        />
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto">{children}</main>
-    </div>
-  );
-};
-
-
-
-
-
-const App: React.FC = () => {
-  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  const role = localStorage.getItem("role");
-
-  return (
-    <Router>
-      <Routes>
-        {/* Login page */}
-        <Route path="/login" element={<Login />} />
-
-        {/* Home / Recruiter Dashboard */}
+        {/* Recruiter Protected Routes */}
         <Route
           path="/"
           element={
-            isLoggedIn ? (
-              role === "recruiter" ? (
-                <PageLayout>
+            isLoggedIn && isRecruiter ? (
+              <PageLayout>
+                <AnimatedPage>
                   <RecruiterDashboard />
-                </PageLayout>
-              ) : (
-                <></>
-              )
+                </AnimatedPage>
+              </PageLayout>
             ) : (
               <Navigate to="/login" replace />
             )
           }
         />
-
-        {/* Candidate List */}
         <Route
           path="/candidates"
           element={
-            isLoggedIn && role === "recruiter" ? (
+            isLoggedIn && isRecruiter ? (
               <PageLayout>
-                <CandidateList />
+                <AnimatedPage>
+                  <CandidateList />
+                </AnimatedPage>
               </PageLayout>
             ) : (
               <Navigate to="/login" replace />
             )
           }
         />
-
-        {/* Add Candidate */}
         <Route
           path="/create-candidate"
           element={
-            isLoggedIn && role === "recruiter" ? (
+            isLoggedIn && isRecruiter ? (
               <PageLayout>
-                <CandidateProfile/>
+                <AnimatedPage>
+                  <CandidateProfile />
+                </AnimatedPage>
               </PageLayout>
             ) : (
               <Navigate to="/login" replace />
             )
           }
         />
-
-        {/* Edit Candidate */}
         <Route
           path="/edit-candidate/:id"
           element={
-            isLoggedIn && localStorage.getItem("role") === "recruiter" ? (
+            isLoggedIn && isRecruiter ? (
               <PageLayout>
-                <CandidateProfile/>
+                <AnimatedPage>
+                  <CandidateProfile />
+                </AnimatedPage>
               </PageLayout>
             ) : (
               <Navigate to="/login" replace />
             )
           }
         />
-      </Routes>
+        <Route
+          path="/schedule-interview/:candidateId?"
+          element={
+            isLoggedIn && isRecruiter ? (
+              <PageLayout>
+                <AnimatedPage>
+                  <ScheduleInterview />
+                </AnimatedPage>
+              </PageLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/interviews"
+          element={
+            isLoggedIn && isRecruiter ? (
+              <PageLayout>
+                <AnimatedPage>
+                  <InterviewList />
+                </AnimatedPage>
+              </PageLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
+        {/* Candidate Protected Routes */}
+        <Route
+          path="/candidate-dashboard"
+          element={
+            isLoggedIn && isCandidate ? (
+                <AnimatedPage>
+                  <CandidateDashboard />
+                </AnimatedPage>
+            ) : (
+              <Navigate to="/candidate-login" replace />
+            )
+          }
+        />
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
+const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    localStorage.getItem("isLoggedIn") === "true"
+  );
+  const [role, setRole] = useState(localStorage.getItem("role"));
+
+  return (
+    <Router>
+      <AppRoutes
+        isLoggedIn={isLoggedIn}
+        role={role}
+        setIsLoggedIn={setIsLoggedIn}
+        setRole={setRole}
+      />
     </Router>
   );
 };

@@ -101,7 +101,7 @@ const CandidateList: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-900 truncate">
                       {c.name}
                     </h3>
-                    <span
+                    {/* <span
                       className={`ml-3 px-3 py-1 text-xs font-medium rounded-full ${
                         interviewScheduled
                           ? "bg-green-100 text-green-800"
@@ -109,7 +109,7 @@ const CandidateList: React.FC = () => {
                       }`}
                     >
                       {interviewScheduled ? "Scheduled" : "Not Scheduled"}
-                    </span>
+                    </span> */}
                   </div>
 
                   <p className="text-sm text-gray-600">{c.email}</p>
