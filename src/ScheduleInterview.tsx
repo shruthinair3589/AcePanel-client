@@ -105,7 +105,7 @@ const ScheduleInterview: React.FC = () => {
       const payload = {
         candidate_id: selectedCandidate.id,
         scheduled_at: scheduledAt,
-        tech_stack: selectedTechs,
+        technology: selectedTechs,
         call_id: callId,
       };
       await API.post("/schedule-interview", payload);
