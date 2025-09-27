@@ -16,6 +16,8 @@ import ScheduleInterview from "./ScheduleInterview";
 import PageLayout from "./PageLayout";
 import InterviewList from "./InterviewList";
 import CandidateDashboard from "./CandidateDasboard";
+import ChatWidget from "./ChatWidget";
+
 
 // Reusable wrapper for page animations
 const AnimatedPage: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -41,6 +43,7 @@ const AppRoutes: React.FC<{
 
   return (
     <AnimatePresence mode="wait">
+      <ChatWidget />
       <Routes location={location} key={location.pathname}>
         {/* Common Login */}
         <Route
