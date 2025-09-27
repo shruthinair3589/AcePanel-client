@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Disc, Mic, Video, Bot, X, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import API from "./api";
+import { startAssistant, vapi, stopAssistant } from "./AI";
+import ActiveCallDetails from "./call/ActiveCallDetails";
 
 interface InterviewDetails {
   id: number,
@@ -22,7 +24,16 @@ const CandidateDashboard: React.FC = () => {
   const [interviewDetails, setInterviewDetails] = useState<InterviewDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-
+  const [showCallUI, setShowCallUI] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [callLoading, setCallLoading] = useState(false);
+  const [assistantIsSpeaking, setAssistantIsSpeaking] = useState(false);
+  const [volumeLevel, setVolumeLevel] = useState(0);
+  const [callId, setCallId] = useState<string | undefined>("");
+  const [callResult, setCallResult] = useState<any | null>(null);
+  const [loadingResult, setLoadingResult] = useState(false);
+  const [transcripts, setTranscripts] = useState< {role: string; text: string }[]>([]);
+  
   useEffect(() => {
     if (!interviewId) return;
     API.get(`/interview/${interviewId}`)
@@ -31,9 +42,98 @@ const CandidateDashboard: React.FC = () => {
       .finally(() => setLoading(false));
   }, [interviewId]);
 
-  const openModal = () => setShowModal(true);
-  const closeModal = () => setShowModal(false);
-  const launchInterview = () => closeModal();
+  useEffect(() => {
+    if(started){
+    vapi
+      .on("call-start", () => {
+        setCallLoading(false);
+        setStarted(true);
+      })
+      .on("call-end", () => {
+        setStarted(false);
+        setCallLoading(false);
+      })
+      .on("speech-start", () => {
+        setAssistantIsSpeaking(true);
+      })
+      .on("speech-end", () => {
+        setAssistantIsSpeaking(false);
+      })
+      .on("volume-level", (level) => {
+        setVolumeLevel(level);
+      })
+      .on("message", (message) => {
+        if (message.type === "transcript") {
+           setTranscripts((prev: any) => [
+            ...prev,
+          { role: message.role, text: message.transcript }
+        ]);
+         
+          if (callId) {
+            fetch("http://localhost:8000/save-transcript", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                call_id: callId,
+                role: message.role,
+                transcript: message.transcript,
+              }),
+            })
+              .then((res) => res.json())
+              .then((data) => console.log("Transcript saved:", data))
+              .catch((err) => console.error("Error saving transcript:", err));
+          }
+        }
+      })
+    }
+  }, [started, callId]);
+
+    const handleStop = () => {
+    stopAssistant();
+    getCallDetails();
+  };
+
+const getCallDetails = (interval = 3000) => {
+  setLoadingResult(true);
+  console.log("calling the function from FE")
+  fetch(`http://localhost:8000/call-details?call_id=${callId}`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.analysis && data.summary) {
+          console.log(data);
+          setCallResult(data);
+          setLoadingResult(false);
+        } else {
+          setTimeout(() => getCallDetails(interval), interval);
+        }
+      })
+      .catch((error) => alert(error));
+  };
+
+
+const openModal = () => setShowModal(true);
+const closeModal = () => setShowModal(false);
+
+const launchInterview = async () => {
+    console.log("candidate", interviewDetails)
+    setStarted(true);
+    const name = interviewDetails?.candidate_name;
+    const position = interviewDetails?.position;
+    const yearsOfExp = interviewDetails?.experience_years;
+    const technology = interviewDetails?.technology;
+    closeModal();
+    setShowCallUI(true);
+    const data = await startAssistant(name, position, yearsOfExp, technology);
+    console.log("data", data)
+    setCallId(data?.id);
+    // if (!interviewId || !candidateId) {
+    //   alert("Interview info missing. Please contact support.");
+    //   return;
+    // }
+    // const interviewUrl = `https://vapi.ai/start?candidate_id=${candidateId}&interview_id=${interviewId}`;
+    // window.open(interviewUrl, "_blank");
+    
+  };
 
   const logout = () => {
     localStorage.clear();
@@ -42,8 +142,53 @@ const CandidateDashboard: React.FC = () => {
 
   if (loading) return <div className="p-10 text-center text-gray-400">Loading...</div>;
 
-  return (
-    <div className="relative min-h-screen">
+return (
+   <>
+    { 
+    showCallUI ? (
+      <>
+        {/* Call Result */}
+        {!loadingResult && callResult && (
+          <div className="mt-6 p-6 bg-gray-900 text-white rounded-xl shadow-lg border border-gray-700">
+            <h3 className="text-lg font-semibold mb-3 text-blue-400">📋 Call Result</h3>
+            <p className="mb-2">
+              <span className="font-medium text-gray-300">Qualified:</span>{" "}
+              <span
+                className={`font-bold ${
+                  callResult.analysis.structuredData.is_qualified
+                    ? "text-green-400"
+                    : "text-red-400"
+                }`}
+              >
+                {callResult.analysis.structuredData.is_qualified ? "Yes" : "No"}
+              </span>
+            </p>
+            <p className="text-gray-200 leading-relaxed">{callResult.summary}</p>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {(callLoading || loadingResult) && (
+          <div className="mt-6 flex flex-col items-center justify-center p-6 bg-gray-800 rounded-xl shadow-md">
+            <h2 className="text-lg font-semibold text-blue-400 animate-pulse">
+              ⏳ Fetching call summary...
+            </h2>
+          </div>
+        )}
+
+        {/* Active Call */}
+        {started && (
+          <ActiveCallDetails
+            assistantIsSpeaking={assistantIsSpeaking}
+            volumeLevel={volumeLevel}
+            endCallCallback={handleStop}
+            callId={callId}
+            setCallLoading={setCallLoading}
+          />
+        )}
+      </>
+) : (<>
+      <div className="relative min-h-screen">
       {/* Dark blurred background */}
       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-0"></div>
 
@@ -122,8 +267,8 @@ const CandidateDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Confirmation Modal */}
-      {showModal && (
+      {/* Professional Confirmation Modal */}
+     {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 transform transition-all scale-95 opacity-0 animate-scaleIn">
             <div className="flex justify-between items-start">
@@ -169,7 +314,10 @@ const CandidateDashboard: React.FC = () => {
           }
         `}
       </style>
-    </div>
+      </div>
+      </>)
+    }
+  </>
   );
 };
 
