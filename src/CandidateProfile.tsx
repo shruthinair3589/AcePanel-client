@@ -81,6 +81,27 @@ const CandidateProfile: React.FC<CandidateProfileProps> = () => {
       const file = e.target.files[0];
       setResumeFile(file);
       handleResumeUpload(file);
+      const formData = new FormData();
+      formData.append("file", file);
+    try{
+        setLoading(true);
+        const res = await fetch("http://localhost:8000/upload-resume", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        throw new Error("Upload failed");
+      }
+      const data = await res.json();
+      console.log("Uploaded successfully:", data);
+        
+      }
+     catch (err) {
+      console.error("Error uploading file:", err);
+    } finally {
+      setLoading(false);
+    }
+      
     }
   };
 
