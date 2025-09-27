@@ -43,7 +43,7 @@ const AppRoutes: React.FC<{
 
   return (
     <AnimatePresence mode="wait">
-      <ChatWidget />
+      {isLoggedIn && role==='recruiter' ? <ChatWidget /> : <></>}
       <Routes location={location} key={location.pathname}>
         {/* Common Login */}
         <Route
