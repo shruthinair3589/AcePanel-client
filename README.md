@@ -47,6 +47,8 @@ System auto-generates structured feedback.
 
 Recruiter can query chatbot for instant insights.
 
+Recruiter gets instant feedback/AI Evaluation on thier dashboard after the completion of interview.
+
 This workflow ensures employees on the bench can efficiently participate in interviews without manual coordination, and recruiters can manage multiple candidates seamlessly.
 
 <br />
@@ -70,9 +72,10 @@ npm start
 # 🔑 Environment Variables
 Create a .env file in the root:
 
-VITE_API_BASE_URL=http://localhost:8000</br>
-VITE_VAPI_KEY=your_vapi_api_key<br/>
-VITE_GROQ_KEY=your_groq_api_key
+REACT_API_BASE_URL=http://localhost:8000</br>
+REACT_APP_VAPI_API_KEY=your_vapi_api_key<br/>
+REACT_APP_ASSISTANT_ID=your_vapi_assistant_id<br/>
+REACT_GROQ_KEY=your_groq_api_key
 
 
 
