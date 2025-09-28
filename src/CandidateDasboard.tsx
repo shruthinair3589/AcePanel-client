@@ -64,11 +64,16 @@ const CandidateDashboard: React.FC = () => {
       })
       .on("message", (message) => {
         if (message.type === "transcript") {
-           setTranscripts((prev: any) => [
-            ...prev,
-          { role: message.role, text: message.transcript }
-        ]);
-         
+          setTranscripts((prev) => {
+            if (prev.length > 0) {
+              const last = prev[prev.length - 1];
+              if (last.role === message.role && last.text === message.transcript) {
+                return prev; // ❌ skip duplicate
+              }
+            }
+            return [...prev, { role: message.role, text: message.transcript }];
+          });
+
           if (callId) {
             fetch("http://localhost:8000/save-transcript", {
               method: "POST",
@@ -103,6 +108,29 @@ const getCallDetails = (interval = 3000) => {
           console.log(data);
           setCallResult(data);
           setLoadingResult(false);
+        const transcriptText = data.transcripts.map((t: any) => t.text).join("\n");
+        const interviewResultPayload = {
+          transcript: transcriptText,
+          video_url: "",
+          score: data.analysis.structuredData.Score || 0,
+          feedback: data.summary,
+          qualified: data.analysis.structuredData.Qualified || false
+        };
+        console.log("interviewResultPayload", interviewResultPayload)
+       fetch(`http://localhost:8000/interview/${interviewId}/complete`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(interviewResultPayload)
+        })
+        .then((res) => res.json())
+        .then((completeData) => {
+          console.log("Interview completed response:", completeData);
+          // Optionally update your frontend state here
+        })
+        .catch((err) => console.error("Error completing interview:", err));
+         
         } else {
           setTimeout(() => getCallDetails(interval), interval);
         }
@@ -184,6 +212,7 @@ return (
             endCallCallback={handleStop}
             callId={callId}
             setCallLoading={setCallLoading}
+            transcripts={transcripts}
           />
         )}
       </>

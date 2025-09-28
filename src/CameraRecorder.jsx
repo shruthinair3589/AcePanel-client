@@ -92,14 +92,14 @@ const  CameraRecorder = forwardRef((props, ref) => {
 
 
   return (
-    <div className="mt-8 flex flex-col items-center">
-      <div className="relative w-full max-w-2xl rounded-2xl overflow-hidden shadow-lg border border-gray-700">
+    <div className="flex flex-col items-center h-full">
+      <div className="relative h-full w-full max-w-2xl rounded-2xl overflow-hidden shadow-lg border border-gray-700">
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full h-80 object-cover bg-black"
+          className="w-full h-100 object-cover bg-black"
         />
         <div className="absolute bottom-3 right-3">
           {recording ? (
