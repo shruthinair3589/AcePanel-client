@@ -18,7 +18,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
     { label: "Add Candidate", icon: <PlusCircle className="w-5 h-5" />, path: "/create-candidate" },
     { label: "Schedule", icon: <Calendar className="w-5 h-5" />, path: "/schedule-interview" },
     { label: "Interviews", icon: <Video className="w-5 h-5" />, path: "/interviews" },
-    { label: "Reports & Feedback", icon: <BarChart2 className="w-5 h-5" />, path: "/reports" }, // Optional
+   // { label: "Reports & Feedback", icon: <BarChart2 className="w-5 h-5" />, path: "/reports" }, // Optional
   ];
 
   const handleLogout = () => {

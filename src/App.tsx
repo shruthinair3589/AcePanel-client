@@ -17,6 +17,8 @@ import PageLayout from "./PageLayout";
 import InterviewList from "./InterviewList";
 import CandidateDashboard from "./CandidateDasboard";
 import ChatWidget from "./ChatWidget";
+import FeedbackPage from "./FeedbackPage";
+import ThankYouPage from "./ThankYouPage";
 
 
 // Reusable wrapper for page animations
@@ -43,7 +45,7 @@ const AppRoutes: React.FC<{
 
   return (
     <AnimatePresence mode="wait">
-      {isLoggedIn && role==='recruiter' ? <ChatWidget /> : <></>}
+      {isLoggedIn && role === 'recruiter' ? <ChatWidget /> : <></>}
       <Routes location={location} key={location.pathname}>
         {/* Common Login */}
         <Route
@@ -150,15 +152,41 @@ const AppRoutes: React.FC<{
             )
           }
         />
+        <Route
+          path="/reports/:id"
+          element={
+            isLoggedIn && isRecruiter ? (
+              <PageLayout>
+                <AnimatedPage>
+                  <FeedbackPage />
+                </AnimatedPage>
+              </PageLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
         {/* Candidate Protected Routes */}
         <Route
           path="/candidate-dashboard"
           element={
             isLoggedIn && isCandidate ? (
-                <AnimatedPage>
-                  <CandidateDashboard />
-                </AnimatedPage>
+              <AnimatedPage>
+                <CandidateDashboard />
+              </AnimatedPage>
+            ) : (
+              <Navigate to="/candidate-login" replace />
+            )
+          }
+        />
+        <Route
+          path="/interview/:id/completed"
+          element={
+            isLoggedIn && isCandidate ? (
+              <AnimatedPage>
+                <ThankYouPage />
+              </AnimatedPage>
             ) : (
               <Navigate to="/candidate-login" replace />
             )

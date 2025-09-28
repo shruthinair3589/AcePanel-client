@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { format, isToday } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import { User, Calendar, PlayCircle, FileText, Download } from "lucide-react";
 import { statusBadgeColors } from "./RecruiterDashboard";
 
@@ -24,6 +25,8 @@ const InterviewList: React.FC = () => {
   });
   const [filterName, setFilterName] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     axios
@@ -49,6 +52,53 @@ const InterviewList: React.FC = () => {
     >
       {status}
     </span>
+  );
+
+  const renderInterviewCard = (i: Interview) => (
+    <div
+      key={i.id}
+      className="rounded-xl border shadow-sm hover:shadow-md transition-all p-5 bg-white cursor-pointer"
+      onClick={() => navigate(`/reports/${i.id}`)}
+    >
+      <div className="flex justify-between items-center mb-3">
+        <div className="flex items-center gap-2 font-medium text-gray-800">
+          <User size={18} /> {i.candidate_name}
+        </div>
+        <div className="flex items-center gap-2">
+          <StatusBadge status={i.status} />
+          {isToday(new Date(i.scheduled_at)) && (
+            <span className="px-2 py-0.5 text-xs rounded-md bg-yellow-500 text-white font-semibold">
+              Starts Today
+            </span>
+          )}
+        </div>
+      </div>
+      <p className="text-sm text-gray-600 mb-1">
+        <strong>Scheduled:</strong> {format(new Date(i.scheduled_at), "PPpp")}
+      </p>
+      {i.score !== undefined && (
+        <p className="text-sm text-gray-600">
+          <strong>Score:</strong> {i.score}
+        </p>
+      )}
+      <div className="flex gap-3 mt-4">
+        {i.feedback && (
+          <span className="flex items-center gap-1 text-indigo-600 text-sm">
+            <FileText size={16} /> Feedback available
+          </span>
+        )}
+        {i.video_url && (
+          <span className="flex items-center gap-1 text-indigo-600 text-sm">
+            <PlayCircle size={16} /> Video available
+          </span>
+        )}
+        {i.transcript && (
+          <span className="flex items-center gap-1 text-indigo-600 text-sm">
+            <Download size={16} /> Transcript available
+          </span>
+        )}
+      </div>
+    </div>
   );
 
   return (
@@ -88,33 +138,9 @@ const InterviewList: React.FC = () => {
             <Calendar className="w-5 h-5" /> Upcoming Interviews
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filterInterviews(interviews.upcoming).length ? (
-              filterInterviews(interviews.upcoming).map((i) => (
-                <div
-                  key={i.id}
-                  className="rounded-xl border shadow-sm hover:shadow-md transition-all p-5 bg-white"
-                >
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-2 font-medium text-gray-800">
-                      <User size={18} /> {i.candidate_name}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={i.status} />
-                      {isToday(new Date(i.scheduled_at)) && (
-                        <span className="px-2 py-0.5 text-xs rounded-md bg-yellow-500 text-white font-semibold">
-                          Starts Today
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <strong>Scheduled:</strong> {format(new Date(i.scheduled_at), "PPpp")}
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No upcoming interviews</p>
-            )}
+            {filterInterviews(interviews.upcoming).length
+              ? filterInterviews(interviews.upcoming).map(renderInterviewCard)
+              : <p className="text-gray-500">No upcoming interviews</p>}
           </div>
         </section>
       )}
@@ -126,59 +152,9 @@ const InterviewList: React.FC = () => {
             <Calendar className="w-5 h-5" /> Past Interviews
           </h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filterInterviews(interviews.past).length ? (
-              filterInterviews(interviews.past).map((i) => (
-                <div
-                  key={i.id}
-                  className="rounded-xl border shadow-sm hover:shadow-md transition-all p-5 bg-white"
-                >
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-2 font-medium text-gray-800">
-                      <User size={18} /> {i.candidate_name}
-                    </div>
-                    <StatusBadge status={i.status} />
-                  </div>
-                  <p className="text-sm text-gray-600 mb-1">
-                    <strong>Scheduled:</strong> {format(new Date(i.scheduled_at), "PPpp")}
-                  </p>
-                  {i.score !== undefined && (
-                    <p className="text-sm text-gray-600">
-                      <strong>Score:</strong> {i.score}
-                    </p>
-                  )}
-                  <div className="flex gap-3 mt-4">
-                    {i.feedback && (
-                      <a
-                        href={`/reports/${i.id}`}
-                        className="flex items-center gap-1 text-indigo-600 hover:underline text-sm"
-                      >
-                        <FileText size={16} /> Feedback
-                      </a>
-                    )}
-                    {i.video_url && (
-                      <a
-                        href={i.video_url}
-                        download
-                        className="flex items-center gap-1 text-indigo-600 hover:underline text-sm"
-                      >
-                        <PlayCircle size={16} /> Video
-                      </a>
-                    )}
-                    {i.transcript && (
-                      <a
-                        href={i.transcript}
-                        download
-                        className="flex items-center gap-1 text-indigo-600 hover:underline text-sm"
-                      >
-                        <Download size={16} /> Transcript
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500">No past interviews</p>
-            )}
+            {filterInterviews(interviews.past).length
+              ? filterInterviews(interviews.past).map(renderInterviewCard)
+              : <p className="text-gray-500">No past interviews</p>}
           </div>
         </section>
       )}
