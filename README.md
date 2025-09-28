@@ -47,6 +47,8 @@ System auto-generates structured feedback.
 
 Recruiter can query chatbot for instant insights.
 
+Recruiter gets instant feedback/AI Evaluation on thier dashboard after the completion of interview.
+
 This workflow ensures employees on the bench can efficiently participate in interviews without manual coordination, and recruiters can manage multiple candidates seamlessly.
 
 <br />
