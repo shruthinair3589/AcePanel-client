@@ -70,8 +70,9 @@ npm start
 # 🔑 Environment Variables
 Create a .env file in the root:
 
-VITE_API_BASE_URL=http://localhost:8000</br>
-VITE_VAPI_KEY=your_vapi_api_key<br/>
+REACT_API_BASE_URL=http://localhost:8000</br>
+REACT_APP_VAPI_API_KEY=your_vapi_api_key<br/>
+REACT_APP_ASSISTANT_ID=your_vapi_assistant_id<br/>
 VITE_GROQ_KEY=your_groq_api_key
 
 
