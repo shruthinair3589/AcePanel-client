@@ -171,7 +171,7 @@ const FeedbackPage: React.FC = () => {
 
             {/* Video / Download Links */}
             <div className="flex gap-4 mt-6">
-                {interview.video_url && (
+                {(
                     <a
                         href={interview.video_url}
                         download

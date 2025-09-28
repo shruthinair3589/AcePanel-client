@@ -66,28 +66,28 @@ const InterviewList: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <StatusBadge status={i.status} />
-          {isToday(new Date(i.scheduled_at)) && (
+          {/* {isToday(new Date(i.scheduled_at)) && (
             <span className="px-2 py-0.5 text-xs rounded-md bg-yellow-500 text-white font-semibold">
               Starts Today
             </span>
-          )}
+          )} */}
         </div>
       </div>
       <p className="text-sm text-gray-600 mb-1">
         <strong>Scheduled:</strong> {format(new Date(i.scheduled_at), "PPpp")}
       </p>
-      {i.score !== undefined && (
+      {/* {i.score !== undefined && (
         <p className="text-sm text-gray-600">
           <strong>Score:</strong> {i.score}
         </p>
-      )}
-      <div className="flex gap-3 mt-4">
+      )} */}
+      {/* <div className="flex gap-3 mt-4">
         {i.feedback && (
           <span className="flex items-center gap-1 text-indigo-600 text-sm">
             <FileText size={16} /> Feedback available
           </span>
         )}
-        {i.video_url && (
+        {(
           <span className="flex items-center gap-1 text-indigo-600 text-sm">
             <PlayCircle size={16} /> Video available
           </span>
@@ -97,7 +97,7 @@ const InterviewList: React.FC = () => {
             <Download size={16} /> Transcript available
           </span>
         )}
-      </div>
+      </div> */}
     </div>
   );
 
