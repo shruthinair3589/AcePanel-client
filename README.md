@@ -56,9 +56,9 @@ Prerequisites
 Node.js >= 18
 Backend API (FastAPI service running separately)
 Environment variables (API keys for Vapi, Groq, DB URL, etc.)
-<br />
-# Clone the repo
-git clone https://github.com/<your-org>/AcePanel-client.git
+<br /><br />
+# Clone the repo <br />
+git clone https://github.com/<your-org>/AcePanel-client.git<br />
 cd AcePanel-client
 
 # Install dependencies
