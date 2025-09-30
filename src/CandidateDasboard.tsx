@@ -215,7 +215,7 @@ const CandidateDashboard: React.FC = () => {
                 endCallCallback={handleStop}
                 callId={callId}
                 setCallLoading={setCallLoading}
-               // transcripts={transcripts}
+                transcripts={transcripts}
               />
             )}
           </>
