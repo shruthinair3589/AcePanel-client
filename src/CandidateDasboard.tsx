@@ -112,9 +112,9 @@ const CandidateDashboard: React.FC = () => {
           const interviewResultPayload = {
             transcript: transcriptText,
             video_url: "",
-            score: data.analysis.structuredData.Score || 0,
+            score: data.analysis.structuredData.score || 0,
             feedback: data.summary,
-            qualified: data.analysis.structuredData.Qualified || false
+            qualified: data.analysis.structuredData.qualified || false
           };
           console.log("interviewResultPayload", interviewResultPayload)
           fetch(`http://localhost:8000/interview/${interviewId}/complete`, {
@@ -215,7 +215,7 @@ const CandidateDashboard: React.FC = () => {
                 endCallCallback={handleStop}
                 callId={callId}
                 setCallLoading={setCallLoading}
-                transcripts={transcripts}
+               // transcripts={transcripts}
               />
             )}
           </>
